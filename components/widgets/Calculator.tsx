@@ -4,34 +4,45 @@ import './Widgets.css';
 const Calculator: React.FC = () => {
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
-
-  const safeEval = (expr: string): number => {
-    // Remove any characters that aren't numbers, operators, or decimals
-    const sanitized = expr.replace(/[^0-9+\-*/.() ]/g, '');
-    // Use Function instead of eval for better security
-    return new Function(`return ${sanitized}`)();
-  };
+  const [lastWasOperator, setLastWasOperator] = useState(false);
+  const [lastWasEquals, setLastWasEquals] = useState(false);
 
   const handleNumber = (num: string) => {
-    if (num === '.' && display.includes('.')) return;
-    setDisplay(display === '0' && num !== '.' ? num : display + num);
-    setEquation(equation + num);
+    if (lastWasEquals) {
+      setDisplay(num);
+      setEquation(num);
+      setLastWasEquals(false);
+    } else {
+      setDisplay(display === '0' ? num : display + num);
+      setEquation(equation + num);
+    }
+    setLastWasOperator(false);
   };
 
   const handleOperator = (op: string) => {
-    setEquation(equation + ' ' + op + ' ');
-    setDisplay('0');
+    if (lastWasOperator) {
+      setEquation(equation.slice(0, -1) + op);
+    } else {
+      setEquation(equation + op);
+    }
+    setLastWasOperator(true);
+    setLastWasEquals(false);
   };
 
   const calculate = () => {
+    if (lastWasOperator) return;
+
     try {
-      const result = safeEval(equation);
-      const formattedResult =
-        Number.isInteger(result) || equation.includes('.')
-          ? result.toString()
-          : result.toFixed(8).replace(/\.?0+$/, '');
-      setDisplay(formattedResult);
-      setEquation(formattedResult);
+      const sanitized = equation.replace(/[^0-9+\-*/.() ]/g, '');
+      const result = Function(`return ${sanitized}`)();
+      const formatted =
+        Number.isFinite(result)
+          ? Number(result.toFixed(8)).toString()
+          : 'Error';
+
+      setDisplay(formatted);
+      setEquation(formatted);
+      setLastWasEquals(true);
     } catch {
       setDisplay('Error');
       setEquation('');
@@ -41,6 +52,8 @@ const Calculator: React.FC = () => {
   const clear = () => {
     setDisplay('0');
     setEquation('');
+    setLastWasOperator(false);
+    setLastWasEquals(false);
   };
 
   return (

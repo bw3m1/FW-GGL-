@@ -5,17 +5,33 @@ import PeopleAlsoAsk from './PeopleAlsoAsk';
 
 const SearchResults: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = (query: string) => {
-    setHasSearched(true);
-    // Here you would typically make an API call for search results
-    console.log('Searching for:', query);
+  const handleSearch = async (query: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setHasSearched(true);
+    } catch (err) {
+      setError('Failed to fetch results. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="search-page">
       <SearchBar onSearch={handleSearch} />
-      {hasSearched && (
+      {isLoading && (
+        <div className="loading-container">
+          <div className="loading-spinner" />
+        </div>
+      )}
+      {error && <div className="error-message">{error}</div>}
+      {hasSearched && !isLoading && (
         <div className="search-results">
           <div className="main-results">
             {/* Main search results would go here */}
